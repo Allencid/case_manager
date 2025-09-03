@@ -6,7 +6,7 @@ from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 
 # ============= Google Drive 設定 =============
-JSON_FILE_ID = "1lI7IwoMVv49RyDuSVKNoS81jnHQ2bYYY"   # 這裡換成你上傳到 Google Drive 的 service_account.json ID
+JSON_FILE_ID = "1Soz_zcUJlqJWsg2fTojj1vaTrIS00o3Q"   # 這裡換成你上傳到 Google Drive 的 service_account.json ID
 DATA_FILE_NAME = "cases.json"        # 存放案件資料的檔案名稱
 
 @st.cache_resource
@@ -141,3 +141,4 @@ else:
         st.write("———")
         for k, v in c.items():
             st.write(f"**{k}**: {v}")
+
