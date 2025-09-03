@@ -10,25 +10,33 @@ import json
 from datetime import datetime, date
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
+from calendar import HTMLCalendar
+import streamlit.components.v1 as components
 
-# ------------------------- Google Drive 設定 -------------------------
+st.set_page_config(layout="wide")
+st.title("案件管理系統 (Streamlit + Google Drive)")
+
+# ------------------------- Google Drive Service Account 設定 -------------------------
+# 將 Service Account JSON 放到 Streamlit Secrets
+service_account_info = json.loads(st.secrets["DRIVE_SERVICE_ACCOUNT_JSON"])
+
 gauth = GoogleAuth()
-gauth.LocalWebserverAuth()  # 初次授權，會跳出瀏覽器登入
+gauth.settings['client_config_backend'] = 'service'
+gauth.settings['service_config'] = service_account_info
+gauth.ServiceAuth()
 drive = GoogleDrive(gauth)
 
-# 檔案名稱
 FILE_NAME = "cases.json"
 
 # ------------------------- 取得或建立檔案 -------------------------
 def get_or_create_file():
     file_list = drive.ListFile({'q': f"title='{FILE_NAME}'"}).GetList()
     if file_list:
-        return file_list[0]  # 已存在
+        return file_list[0]
     else:
         # 建立空 JSON
-        empty_cases = []
         with open(FILE_NAME, "w", encoding="utf-8") as f:
-            json.dump(empty_cases, f, ensure_ascii=False, indent=2)
+            json.dump([], f, ensure_ascii=False, indent=2)
         file = drive.CreateFile({'title': FILE_NAME})
         file.SetContentFile(FILE_NAME)
         file.Upload()
@@ -48,17 +56,14 @@ def save_cases(cases):
     file.SetContentFile(FILE_NAME)
     file.Upload()
 
-# ------------------------- Streamlit 介面 -------------------------
-st.title("案件管理系統 (Google Drive 版)")
-
 cases = load_cases()
 
+# ------------------------- 側邊欄：新增/修改案件 -------------------------
 st.sidebar.header("新增/修改案件")
 with st.sidebar.form("case_form"):
     case_number = st.text_input("案號")
     case_date = st.date_input("案件日期", date.today())
     case_name = st.text_input("案件名稱")
-    
     extra_fields = st.text_area("額外欄位 (格式: 欄位名=值，每行一個)", "")
     test_dates_input = st.text_area("測試日期 (多筆用逗號隔開)", "")
 
@@ -110,9 +115,6 @@ for c in cases:
             continue
 
 # ------------------------- 月曆 (測試日期綠色) -------------------------
-import streamlit.components.v1 as components
-from calendar import HTMLCalendar
-
 def generate_calendar(cases):
     cal = HTMLCalendar()
     month_html = cal.formatmonth(today.year, today.month)
@@ -129,3 +131,4 @@ def generate_calendar(cases):
 
 st.header("本月測試日期標記")
 st.markdown(generate_calendar(cases), unsafe_allow_html=True)
+
